@@ -10,3 +10,7 @@ body,html,#root{
 .main-heading{
  background-color: #93BBF6; 
 }
+.scrollable-list {
+  max-height: 400px; /* Set the max height for the list */
+  overflow-y: auto;  /* Enable vertical scrolling */
+}
