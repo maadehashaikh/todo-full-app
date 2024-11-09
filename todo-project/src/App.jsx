@@ -46,7 +46,12 @@ const App = () => {
     if (editIndex !== null && todo.text !== "") {
       const updatedTasks = tasks.map((task, i) =>
         i === editIndex
-          ? { ...task, text: todo.text, description: todo.description }
+          ? {
+              ...task,
+              text: todo.text,
+              description: todo.description,
+              time: todo.time,
+            }
           : task
       );
       setTasks(updatedTasks);
@@ -89,10 +94,72 @@ const App = () => {
   };
 
   // Function to start checking deadlines when button is clicked
+
+  // function startDeadlineAlert(index) {
+  //   // setInterval(() => {
+  //     const task = tasks[index];
+  //     const [taskHours, taskMinutes] = task.time.split(":").map(Number);
+  //     console.log(`TaskTime is : ${taskHours} : ${taskMinutes}`);
+
+  //     const now = new Date().toLocaleString("en-US", {
+  //       timeZone: "Asia/Karachi",
+  //     });
+  //     const currentTime = new Date(now);
+  //     const currentHours = currentTime.getHours();
+  //     const currentMinutes = currentTime.getMinutes();
+  //     console.log(`CurrentTime is : ${currentHours}:${currentMinutes}`);
+
+  //     if (currentHours === taskHours && currentMinutes === taskMinutes) {
+  //       playNotificationSound();
+  //       // clearInterval(intervalId);
+  //     }
+  //   // }, 60000);
+  // }
+
+  // function playNotificationSound() {
+  //   // Uncomment this code to play a sound when the deadline is reached
+  //   // const audio = new Audio("/path/to/soundfile.mp3"); // Replace with actual path to your sound file
+  //   // audio.play(); // Play the sound
+
+  //   // Or use a browser alert for testing purposes
+  //   alert("Deadline End 🕒");
+  // }
+
   function startDeadlineAlert(index) {
-    console.log(index);
+    // setInterval(() => {
+    const task = tasks[index];
+    const [taskHours, taskMinutes] = task.time.split(":").map(Number);
+    console.log(`TaskTime is : ${taskHours}:${taskMinutes}`);
+
+    const now = new Date().toLocaleString("en-US", {
+      timeZone: "Asia/Karachi",
+    });
+    const currentTime = new Date(now);
+    const currentHours = currentTime.getHours();
+    const currentMinutes = currentTime.getMinutes();
+    console.log(`CurrentTime is : ${currentHours}:${currentMinutes}`);
+
+    if (currentHours === taskHours && currentMinutes === taskMinutes) {
+      playNotificationSound();
+      //clearInterval(intervalId); // Clear the interval when the deadline is reached
+    }
+    // }, 60000); // Check every minute (60000 milliseconds)
   }
 
+  function playNotificationSound() {
+    // Uncomment this code to play a sound when the deadline is reached
+    //const audio = new Audio("/path/to/soundfile.mp3"); // Replace with actual path to your sound file
+    // audio.play(); // Play the sound
+
+    // Or use a browser alert for testing purposes
+    alert("Deadline End 🕒");
+  }
+
+  function playNotificationSound() {
+    //   // const audio = new Audio("/path/to/soundfile.mp3"); // Replace with actual path
+    //   // audio.play(); // Play the sound
+    alert(`Deadline End `);
+  }
   return (
     <>
       <div className="w-full h-screen bg-violet-400 ">
@@ -138,13 +205,6 @@ const App = () => {
               placeholder="Select Time"
               className="ml-2 border-4 border-blue-500 rounded-lg py-2 px-4 text-black"
             />
-            <br />
-            <button
-              className="ml-3 border-4 border-blue-500 rounded-lg py-2 px-4 text-black bg-white mt-1 "
-              onClick={() => startDeadlineAlert(index)}
-            >
-              Time’s Up Alert ⏰
-            </button>
             <br />
             <button
               type="submit"
@@ -228,6 +288,13 @@ const App = () => {
                       ) : (
                         <i class="fa-regular fa-circle-check"></i>
                       )}
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded px-2 bg-white ml-1 text-base text-red-600"
+                      onClick={() => startDeadlineAlert(index)} // Pass the index here
+                    >
+                      <i class="fa-solid fa-bell"></i>
                     </button>
                   </div>
                 </div>
