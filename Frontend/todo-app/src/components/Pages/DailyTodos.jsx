@@ -19,7 +19,7 @@ const DailyTodos = () => {
 
   const fetchTodaysTask = async () => {
     try {
-      const response = await axios.get("https://localhost:/api/todayTask");
+      const response = await axios.get("http://localhost:8082/api/todayTask");
       console.log(response.data.message);
       if (response.data.success) {
         setTodayTask(response.data.todayTodo);
