@@ -15,6 +15,12 @@ const todoSchema = mongoose.Schema(
     priority: {
       type: String,
     },
+    category: {
+      type: String,
+    },
+    status: {
+      type: String,
+    },
   },
   { timestamps: true }
 );

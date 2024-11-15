@@ -5,7 +5,7 @@ import DailyTodos from "./components/Pages/DailyTodos";
 import Home from "./components/Pages/Home";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import TodoHistory from "./components/Pages/TodoHistory";
 const App = () => {
   return (
     <>
@@ -13,6 +13,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/DailyTodo" element={<DailyTodos />}></Route>
+        <Route path="/TodoHistory" element={<TodoHistory />}></Route>
       </Routes>
       <ToastContainer />
     </>

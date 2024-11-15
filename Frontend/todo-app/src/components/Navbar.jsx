@@ -11,9 +11,10 @@ const Navbar = () => {
       <div>
         <nav className="flex gap-4 text-white font-sans font-semibold">
           <Link to={"/"}>Home</Link>
-          <Link to="/DailyTodo">Set Goals</Link>
-          <Link>Weekly Goals </Link>
-          <Link>Yearly Goals</Link>
+          <Link to="/DailyTodo">SetGoals</Link>
+          <Link to="/TodoHistory">TodoHistory</Link>
+          <Link>WeeklyGoals</Link>
+          <Link>YearlyGoals</Link>
         </nav>
       </div>
       <div>

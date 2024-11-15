@@ -1,59 +1,142 @@
-const toDo = require("../model/todo.model");
+const Todo = require("../model/todo.model"); // assuming model is in a folder named 'models'
+const mongoose = require("mongoose");
 
-exports.store = async (req, res, next) => {
+// 1. Create a Todo
+exports.createTodo = async (req, res) => {
   try {
-    const todo = await toDo.create(req.body);
-    return res.json({
-      status: 200,
-      success: true,
-      message: "Task Created Successfully",
-      todo,
+    const { text, description, time, priority, category, status } = req.body;
+    const todo = await Todo.create({
+      text,
+      description,
+      time,
+      priority,
+      category,
+      status: "pending",
     });
-  } catch (err) {
-    console.log(err);
+    res
+      .status(201)
+      .json({ message: "Todo created successfully", success: true, todo });
+    console.log(todo);
+  } catch (error) {
+    res.status(500).json({ message: "Error creating todo", error });
   }
 };
 
-exports.todayTask = async (req, res) => {
+// 2. Get All Todos
+exports.getAllTodos = async (req, res) => {
   try {
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0); // Start of today
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999); // End of today
-    const todayTodo = await toDo.find({
-      createdAt: { $gte: startOfDay, $lte: endOfDay },
-    });
-    return res.json({
-      status: 200,
-      success: true,
-      message: "Only Today's Tasks Fetched Successfully",
-      todayTodo,
-    });
-  } catch (err) {
-    console.log(err);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch today's tasks",
-    });
+    const todos = await Todo.find();
+    res.status(200).json(todos);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching todos", error });
   }
 };
 
-exports.index = (req, res, next) => {
+// 3. Update a Todo by ID
+exports.updateTodo = async (req, res) => {
   try {
-  } catch {}
+    const { id } = req.params;
+    const updates = req.body;
+    const todo = await Todo.findByIdAndUpdate(id, updates, { new: true });
+    if (!todo) {
+      return res.status(404).json({ message: "Todo not found" });
+    }
+    res.status(200).json({ message: "Todo updated successfully", todo });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating todo", error });
+  }
 };
 
-exports.get = (req, res, next) => {
+// 4. Delete a Todo by ID
+exports.deleteTodo = async (req, res) => {
   try {
-  } catch {}
+    const { id } = req.params;
+    const todo = await Todo.findByIdAndDelete(id);
+    if (!todo) {
+      return res.status(404).json({ message: "Todo not found" });
+    }
+    res.status(200).json({ message: "Todo deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting todo", error });
+  }
 };
 
-exports.destroy = (req, res, next) => {
+// 5. Get Todos for the Current Date
+exports.getCurrentDateTodos = async (req, res) => {
   try {
-  } catch {}
+    const startOfDay = new Date().setHours(0, 0, 0, 0);
+    const endOfDay = new Date().setHours(23, 59, 59, 999);
+    const todos = await Todo.find({
+      createdAt: { $gte: new Date(startOfDay), $lt: new Date(endOfDay) },
+    });
+    res.status(200).json(todos);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error fetching current date todos", error });
+  }
 };
 
-exports.update = (req, res, next) => {
+// 6. Get Todos Excluding the Current Date
+exports.getTodosExcludingCurrentDate = async (req, res) => {
   try {
-  } catch {}
+    const startOfDay = new Date().setHours(0, 0, 0, 0);
+    const endOfDay = new Date().setHours(23, 59, 59, 999);
+    const todos = await Todo.find({
+      $or: [
+        { createdAt: { $lt: new Date(startOfDay) } },
+        { createdAt: { $gte: new Date(endOfDay) } },
+      ],
+    });
+    res.status(200).json(todos);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error fetching todos excluding current date", error });
+  }
+};
+
+// exports.deleteTodayTodo = async (req, res) => {
+//   try {
+//     const startOfDay = new Date().setHours(0, 0, 0, 0);
+//     const endOfDay = new Date().setHours(23, 59, 59, 999);
+//     const result = await Todo.deleteMany({
+//       createdAt: { $gte: new Date(startOfDay), $lt: new Date(endOfDay) },
+//     });
+//     if (result.deletedCount > 0) {
+//       res.status(200).json({ message: "Todos deleted successfully" });
+//     } else {
+//       res.status(404).json({ message: "No todos found for today" });
+//     }
+//   } catch (error) {
+//     res
+//       .status(500)
+//       .json({ message: "Error deleting current date todos", error });
+//   }
+// };
+
+exports.deleteTodayTodo = async (req, res) => {
+  try {
+    const startOfDay = new Date().setHours(0, 0, 0, 0);
+    const endOfDay = new Date().setHours(23, 59, 59, 999);
+
+    console.log("Deleting todos between:", startOfDay, "and", endOfDay); // Add debug log
+
+    const result = await Todo.deleteMany({
+      createdAt: { $gte: new Date(startOfDay), $lt: new Date(endOfDay) },
+    });
+
+    console.log("Delete result:", result); // Check the delete result
+
+    if (result.deletedCount > 0) {
+      res.status(200).json({ message: "Todos deleted successfully" });
+    } else {
+      res.status(404).json({ message: "No todos found for today" });
+    }
+  } catch (error) {
+    console.error("Error deleting todos:", error); // Log the error
+    res
+      .status(500)
+      .json({ message: "Error deleting current date todos", error });
+  }
 };

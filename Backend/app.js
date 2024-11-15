@@ -8,7 +8,7 @@ const cors = require("cors");
 connectDb();
 app.use(cors());
 app.use(express.json());
-app.use("/api/todo", todoRoute);
+app.use("/api", todoRoute);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
