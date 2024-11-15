@@ -24,14 +24,6 @@ const DailyTodos = () => {
 
   // Destructring
   const { text, description, time, priority, category, status } = todo;
-  // const {
-  //   text = "",
-  //   description = "",
-  //   time = "",
-  //   priority = "",
-  //   category = "daily",
-  //   status = "pending",
-  // } = todo || {};
 
   const handleChange = (e) => {
     setTodo({ ...todo, [e.target.name]: e.target.value });
