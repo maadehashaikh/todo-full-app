@@ -185,19 +185,19 @@ exports.updateTaskStatus = async (req, res) => {
 };
 
 // // 3. Update a Todo by ID
-// exports.updateTodo = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const updates = req.body;
-//     const todo = await Todo.findByIdAndUpdate(id, updates, { new: true });
-//     if (!todo) {
-//       return res.status(404).json({ message: "Todo not found" });
-//     }
-//     res.status(200).json({ message: "Todo updated successfully", todo });
-//   } catch (error) {
-//     res.status(500).json({ message: "Error updating todo", error });
-//   }
-// };
+exports.updateTodo = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    const todo = await Todo.findByIdAndUpdate({_id:id}, updates, { new: true });
+    if (!todo) {
+      return res.status(404).json({ message: "Todo not found" });
+    }
+    res.status(200).json({ message: "Todo updated successfully", todo });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating todo", error });
+  }
+};
 
 // const getStartAndEndOfDayUTC = () => {
 //   const now = new Date();

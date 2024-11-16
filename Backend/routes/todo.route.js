@@ -10,7 +10,7 @@ router.delete("/todos/:id", controller.deleteTodo); // single item delete
 router.get("/todos/today", controller.getCurrentDateTodos);
 // show only today's todo
 router.get("/todos/not-today", controller.getTodosExcludingCurrentDate); // show the history
-
+router.put("/todos/:id",controller.updateTodo)
 router.patch("/todos/:id/status", controller.updateTaskStatus);
 
 module.exports = router;
