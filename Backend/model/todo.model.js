@@ -21,7 +21,10 @@ const todoSchema = mongoose.Schema({
   status: {
     type: String,
   },
-  date: { type: Number, default: Date.now() },
+  date: {
+    type: Number,
+    default: Date.now(),
+  },
 });
 
 module.exports = mongoose.model("Todo", todoSchema);

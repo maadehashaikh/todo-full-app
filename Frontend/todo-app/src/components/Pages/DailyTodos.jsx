@@ -4,7 +4,6 @@ import axios from "axios";
 import { toast } from "react-toastify";
 
 const DailyTodos = () => {
-  // All states
   const [todo, setTodo] = useState({
     text: "",
     description: "",
@@ -17,6 +16,18 @@ const DailyTodos = () => {
   const [tasks, setTasks] = useState([]); //stores the entire list of tasks fetched from the backend
   const [editIndex, setEditIndex] = useState(null); //keeps track of which specific task you are editing
   const [hideDoneTasks, setHideDoneTasks] = useState(false);
+
+  useEffect(() => {
+    const fetchTodos = async () => {
+      try {
+        const response = await axios.get("http://localhost:8082/api/todos");
+        setTasks(response.data); // Initialize tasks
+      } catch (error) {
+        console.error("Error fetching todos:", error);
+      }
+    };
+    fetchTodos();
+  }, [todayTodo]);
 
   useEffect(() => {
     CurrentDateTodo();
@@ -52,7 +63,6 @@ const DailyTodos = () => {
     } catch (err) {
       toast.error("Failed to add task");
     }
-    console.log(todo);
   };
 
   const CurrentDateTodo = async () => {
@@ -63,11 +73,23 @@ const DailyTodos = () => {
       console.log("Error fetching today's todos:", err);
     }
   };
-  // console.log(todayTodo.data);
 
-  const deleteItem = (index) => {
-    const updatedTasks = tasks.filter((_, i) => i !== index);
-    setTasks(updatedTasks);
+  const deleteItem = async (id) => {
+    try {
+      const response = await axios.delete(
+        `http://localhost:8082/api/todos/${id}`
+      );
+      if (response.status === 200) {
+        toast.error("Todo deleted successfully");
+        const updatedTasks = await axios.get("http://localhost:8082/api/todos");
+        console.log(updatedTasks);
+        setTasks(updatedTasks.data);
+      } else {
+        alert(response.data.message || "Failed to delete todo");
+      }
+    } catch (error) {
+      toast.error("An error occurred while deleting the todo");
+    }
   };
 
   const updateItem = async (index) => {
@@ -107,15 +129,41 @@ const DailyTodos = () => {
     }
   };
 
-  const markAsDone = (index) => {
-    const updatedTasks = tasks.map((task, i) =>
-      i === index ? { ...task, done: !task.done } : task
-    );
-    setTasks(updatedTasks);
+  const markAsDone = async (index, id, currentStatus) => {
+    try {
+      const newStatus = currentStatus === "done" ? "pending" : "done";
+
+      // Update status in the database
+      const response = await axios.patch(
+        `http://localhost:8082/api/todos/${id}/status`,
+        {
+          status: newStatus,
+        }
+      );
+
+      if (response.status === 200) {
+        // Update state locally
+        const updatedTasks = tasks.map((task, i) =>
+          i === index ? { ...task, status: newStatus } : task
+        );
+        setTasks(updatedTasks);
+        toast.success("Task status updated successfully!");
+      }
+    } catch (error) {
+      console.error("Error updating task status:", error);
+      toast.error("Failed to update task status");
+    }
   };
 
-  const clearAllTasks = () => {
-    setTasks([]);
+  const clearAllTasks = async () => {
+    const response = await axios.delete(
+      "http://localhost:8082/api/todos/deleteToday"
+    );
+    if (response.data.success) {
+      toast.error(`${response.data.message}`);
+    } else {
+      toast.error(`${response.data.message}`);
+    }
   };
 
   const handleCheckboxChange = (event) => {
@@ -228,7 +276,7 @@ const DailyTodos = () => {
             <button
               type="button"
               className="bg-red-400 px-6 py-2 border-2 border-white ml-3 rounded-lg text-white"
-              //onClick={clearAllTasks}
+              onClick={clearAllTasks}
             >
               Clear All
             </button>
@@ -256,7 +304,7 @@ const DailyTodos = () => {
         </div>
       ) : (
         <div className="bg-purple-500 flex justify-start">
-          <ul className="flex flex-row gap-2 flex-wrap items-center ml-2 mt-2 rounded-lg w-1/2">
+          <ul className="flex flex-row gap-2 flex-wrap items-center ml-2 mt-2 rounded-lg w-full">
             {todayTodo
               // .filter((task) => !hideDoneTasks || !task.done)
               .map((task, index) => (
@@ -276,7 +324,7 @@ const DailyTodos = () => {
                     }`}
                 >
                   <div className="flex flex-col justify-start items-start">
-                    <div className="flex flex-col gap-2 items-start">
+                    <div className="flex flex-col gap-1 items-start">
                       {/* Tasl's Text */}
                       <p className="text-xl">{task.text}</p>
                       {/* Tasl's Text */}
@@ -304,8 +352,7 @@ const DailyTodos = () => {
 
                     {/* Task's deadline */}
                     <p className="text-base text-gray-700 my-1">
-                      {" "}
-                      Category : {task.category}
+                      Category : {task.category || "Not Set"}
                     </p>
 
                     {/* Task's status */}
@@ -325,13 +372,13 @@ const DailyTodos = () => {
                       </button>
                       <button
                         className="bg-white px-2 rounded text-red-400 font-bold ml-1 text-base"
-                        onClick={() => deleteItem(index)}
+                        onClick={() => deleteItem(task._id)}
                       >
                         <i className="fa-solid fa-trash"></i>
                       </button>
                       <button
                         className="bg-white px-2 rounded text-green-600 font-bold ml-1 text-base"
-                        onClick={() => markAsDone(index)}
+                        onClick={() => markAsDone(index, task._id, task.status)}
                       >
                         {task.status === "done" ? (
                           <i className="fa-solid fa-rotate-left"></i>
