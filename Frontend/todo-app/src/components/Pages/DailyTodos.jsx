@@ -228,7 +228,7 @@ const DailyTodos = () => {
             <button
               type="button"
               className="bg-red-400 px-6 py-2 border-2 border-white ml-3 rounded-lg text-white"
-              onClick={clearAllTasks}
+              //onClick={clearAllTasks}
             >
               Clear All
             </button>
