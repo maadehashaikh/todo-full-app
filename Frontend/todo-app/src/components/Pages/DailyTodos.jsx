@@ -17,15 +17,16 @@ const DailyTodos = () => {
   const [editIndex, setEditIndex] = useState(null); //keeps track of which specific task you are editing
   const [hideDoneTasks, setHideDoneTasks] = useState(false);
 
+  const fetchTodos = async () => {
+    try {
+      const response = await axios.get("http://localhost:8082/api/todos");
+      setTasks(response.data); // Initialize tasks
+    } catch (error) {
+      console.error("Error fetching todos:", error);
+    }
+  };
   useEffect(() => {
-    const fetchTodos = async () => {
-      try {
-        const response = await axios.get("http://localhost:8082/api/todos");
-        setTasks(response.data); // Initialize tasks
-      } catch (error) {
-        console.error("Error fetching todos:", error);
-      }
-    };
+
     fetchTodos();
   }, [todayTodo]);
 
@@ -79,11 +80,10 @@ const DailyTodos = () => {
       const response = await axios.delete(
         `http://localhost:8082/api/todos/${id}`
       );
-      if (response.status === 200) {
+      if (response.data.success === 200) {
         toast.error("Todo deleted successfully");
-        const updatedTasks = await axios.get("http://localhost:8082/api/todos");
-        console.log(updatedTasks);
-        setTasks(updatedTasks.data);
+        fetchTodos();
+        
       } else {
         alert(response.data.message || "Failed to delete todo");
       }

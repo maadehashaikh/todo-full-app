@@ -113,7 +113,7 @@ exports.deleteTodayTodo = async (req, res) => {
 
     // Query to delete todos created today
     const result = await Todo.deleteMany({
-      category: "daily",
+      category: "Daily",
       date: { $gte: startOfDayTimestamp, $lt: endOfDayTimestamp },
     });
 
@@ -127,10 +127,9 @@ exports.deleteTodayTodo = async (req, res) => {
     }
 
     // If no todos are found for today, send a not found response
-    res.status(404).json({
+    res.json({
       message: "No todos found for today",
       success: false,
-      status: 404,
     });
   } catch (error) {
     console.error("Error deleting todos:", error);
@@ -153,7 +152,7 @@ exports.deleteTodo = async (req, res) => {
         .status(200)
         .json({ message: "Todo deleted successfully", todo: result });
     } else {
-      return res.status(404).json({ message: "Todo not found" });
+      return res.json({ message: "Todo not found" });
     }
   } catch (error) {
     console.error("Error deleting todo:", error);
