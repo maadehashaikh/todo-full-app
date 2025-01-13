@@ -1,10 +1,11 @@
-const Todo = require("../model/todo.model"); // assuming model is in a folder named 'models'
-const mongoose = require("mongoose");
+const Todo = require("../model/todo.model"); // Assuming model is in a folder named 'models'
 
 // 1. Create a Todo
 exports.createTodo = async (req, res) => {
   try {
-    const { text, description, time, priority, category } = req.body;
+    const { text, description, time, priority, category, } = req.body;
+    const userId = req.user.id; // Extract user ID from the authenticated user
+    console.log("userId", userId)
     const todo = await Todo.create({
       text,
       description,
@@ -12,56 +13,55 @@ exports.createTodo = async (req, res) => {
       priority,
       category,
       status: "pending",
+      userId: userId, // Associate with the user
     });
+
     res
       .status(201)
       .json({ message: "Todo created successfully", success: true, todo });
-    console.log(todo);
   } catch (error) {
+    console.log("err", error)
     res.status(500).json({ message: "Error creating todo", error });
   }
 };
 
-// 2. displaying only today todos
+// 2. Display Only Today's Todos for a User
 exports.getCurrentDateTodos = async (req, res) => {
   try {
+    const userId = req.user.id;
     const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0); // Set to 12:00 AM today
+    startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999); // Set to 11:59:59.999 PM today
-    // Convert both start and end of day to timestamps (milliseconds)
-    const startTimestamp = startOfDay.getTime();
-    const endTimestamp = endOfDay.getTime();
-    // Fetch todos where the date is between the start and end of today
+    endOfDay.setHours(23, 59, 59, 999);
+
     const todos = await Todo.find({
-      date: { $gte: startTimestamp, $lt: endTimestamp },
+      userId: userId, // Filter by user ID
+      date: { $gte: startOfDay.getTime(), $lt: endOfDay.getTime() },
     });
 
     res.status(200).json(todos);
   } catch (error) {
+    console.log("err", error)
     res
       .status(500)
       .json({ message: "Error fetching current date todos", error });
   }
 };
 
-// 3. Get Todos Excluding the Current Date
+// 3. Get Todos Excluding the Current Date for a User
 exports.getTodosExcludingCurrentDate = async (req, res) => {
   try {
-    // Get the start and end of today in milliseconds (timestamps)
+    const userId = req.user.id;
     const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0); // 12:00 AM today
-    const startOfDayTimestamp = startOfDay.getTime(); // Get timestamp (in ms)
-
+    startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999); // 11:59 PM today
-    const endOfDayTimestamp = endOfDay.getTime(); // Get timestamp (in ms)
+    endOfDay.setHours(23, 59, 59, 999);
 
-    // Query to fetch todos created before today or after today
     const todos = await Todo.find({
+      user: userId, // Filter by user ID
       $or: [
-        { date: { $lt: startOfDayTimestamp } }, // Before today
-        { date: { $gte: endOfDayTimestamp } }, // After today
+        { date: { $lt: startOfDay.getTime() } },
+        { date: { $gte: endOfDay.getTime() } },
       ],
     });
 
@@ -74,65 +74,74 @@ exports.getTodosExcludingCurrentDate = async (req, res) => {
   }
 };
 
-// 4. Get All Todos
+// 4. Get All Todos for a User
 exports.getAllTodos = async (req, res) => {
   try {
-    const todos = await Todo.find();
+    const userId = req.user.id;
+
+    const todos = await Todo.find({ user: userId }); // Filter by user ID
     const todosWithReadableDate = todos.map((todo) => {
-      const readableDate = new Date(todo.date).toLocaleDateString(); // Converts the timestamp to a human-readable date
+      const readableDate = new Date(todo.date).toLocaleDateString();
       return {
         ...todo.toObject(),
-        date: readableDate, // Update the date field with the readable date
+        date: readableDate,
       };
     });
+
     res.status(200).json(todosWithReadableDate);
   } catch (error) {
     res.status(500).json({ message: "Error fetching todos", error });
   }
 };
 
-// 5. Delete only today todos
+
+exports.getUserTaskStats = async (req, res) => {
+  try {
+    const userId = req.user.id; // Get the user ID from the request
+    const completedTasks = await Todo.countDocuments({ user: userId, status: "done" });
+    const pendingTasks = await Todo.countDocuments({ user: userId, status: { $ne: "done" } });
+
+    res.status(200).json({
+      success: true,
+      stats: {
+        completed: completedTasks,
+        pending: pendingTasks,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching user task stats:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching user task stats",
+      error: error.message,
+    });
+  }
+};
+
+// 5. Delete Only Today's Todos for a User
 exports.deleteTodayTodo = async (req, res) => {
   try {
-    // Get the start and end of today in milliseconds (timestamps)
+    const userId = req.user.id;
+    console.log("useId", userId)
     const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0); // 12:00 AM today
-    const startOfDayTimestamp = startOfDay.getTime(); // Get timestamp (in ms)
-
+    startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999); // 11:59 PM today
-    const endOfDayTimestamp = endOfDay.getTime(); // Get timestamp (in ms)
+    endOfDay.setHours(23, 59, 59, 999);
 
-    // Logging for debugging purposes
-    console.log(
-      "Deleting todos between:",
-      new Date(startOfDayTimestamp).toISOString(),
-      "and",
-      new Date(endOfDayTimestamp).toISOString()
-    );
-
-    // Query to delete todos created today
     const result = await Todo.deleteMany({
-      category: "Daily",
-      date: { $gte: startOfDayTimestamp, $lt: endOfDayTimestamp },
+      userId: userId, // Filter by user ID
+      date: { $gte: startOfDay.getTime(), $lt: endOfDay.getTime() },
     });
 
-    // If any todos are deleted, send a success response
     if (result.deletedCount > 0) {
       return res.status(200).json({
         message: "Todos deleted successfully",
-        status: 200,
         success: true,
       });
     }
 
-    // If no todos are found for today, send a not found response
-    res.json({
-      message: "No todos found for today",
-      success: false,
-    });
+    res.json({ message: "No todos found for today", success: false });
   } catch (error) {
-    console.error("Error deleting todos:", error);
     res.status(500).json({
       message: "Error deleting current date todos",
       error: error.message,
@@ -140,37 +149,37 @@ exports.deleteTodayTodo = async (req, res) => {
   }
 };
 
-// 6. Delete Single Todo
+// 6. Delete a Todo by ID for a User
 exports.deleteTodo = async (req, res) => {
   try {
-    const { id } = req.params; // Extract the todo ID from the route parameter
+    const { id } = req.params;
+    const userId = req.user.id;
 
-    const result = await Todo.findByIdAndDelete(id); // Find and delete the todo by ID
+    const result = await Todo.findOneAndDelete({ _id: id, userId: userId }); // Match both ID and user
 
     if (result) {
       return res
         .status(200)
         .json({ message: "Todo deleted successfully", todo: result });
     } else {
-      return res.json({ message: "Todo not found" });
+      return res.status(404).json({ message: "Todo not found" });
     }
   } catch (error) {
-    console.error("Error deleting todo:", error);
     res.status(500).json({ message: "Error deleting todo", error });
   }
 };
 
-// 7. Update status
+// 7. Update Task Status for a User
 exports.updateTaskStatus = async (req, res) => {
   try {
-    const { id } = req.params; // Task ID from the request parameters
-    const { status } = req.body; // New status from the request body
+    const { id } = req.params;
+    const { status } = req.body;
+    const userId = req.user.id;
 
-    // Update the task's status
-    const updatedTask = await Todo.findByIdAndUpdate(
-      id,
+    const updatedTask = await Todo.findOneAndUpdate(
+      { _id: id, userId: userId }, // Match ID and user
       { status },
-      { new: true } // Return the updated document
+      { new: true }
     );
 
     if (!updatedTask) {
@@ -179,62 +188,33 @@ exports.updateTaskStatus = async (req, res) => {
 
     res.status(200).json(updatedTask);
   } catch (error) {
-    console.error("Error updating task status:", error);
     res.status(500).json({ message: "Failed to update task status" });
   }
 };
 
-// // 3. Update a Todo by ID
-// exports.updateTodo = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const updates = req.body;
-//     const todo = await Todo.findByIdAndUpdate(id, updates, { new: true });
-//     if (!todo) {
-//       return res.status(404).json({ message: "Todo not found" });
-//     }
-//     res.status(200).json({ message: "Todo updated successfully", todo });
-//   } catch (error) {
-//     res.status(500).json({ message: "Error updating todo", error });
-//   }
-// };
+// 8. Update a Todo for a User
+exports.updateTodo = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { text, description, time, priority, category, status } = req.body;
+    const userId = req.user.id;
 
-// const getStartAndEndOfDayUTC = () => {
-//   const now = new Date();
+    const updatedTodo = await Todo.findOneAndUpdate(
+      { _id: id, userId: userId }, // Match ID and user
+      { text, description, time, priority, category, status },
+      { new: true, runValidators: true }
+    );
 
-//   // Start of the day in UTC
-//   const startOfDay = new Date(
-//     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0)
-//   );
+    if (!updatedTodo) {
+      return res.status(404).json({ message: "Todo not found", success: false });
+    }
 
-//   // End of the day in UTC
-//   const endOfDay = new Date(
-//     Date.UTC(
-//       now.getUTCFullYear(),
-//       now.getUTCMonth(),
-//       now.getUTCDate(),
-//       23,
-//       59,
-//       59,
-//       999
-//     )
-//   );
-
-//   return { startOfDay, endOfDay };
-// };
-
-// 4. Delete a Todo by ID
-// exports.deleteTodo = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const todo = await Todo.findByIdAndDelete(id);
-//     if (!todo) {
-//       return res.status(404).json({ message: "Todo not found" });
-//     }
-//     res.status(200).json({ message: "Todo deleted successfully" });
-//   } catch (error) {
-//     res.status(500).json({ message: "Error deleting todo", error });
-//   }
-// };
-
-// 5. Get Todos for the Current Date
+    res.status(200).json({
+      message: "Todo updated successfully",
+      success: true,
+      todo: updatedTodo,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating todo", error });
+  }
+};

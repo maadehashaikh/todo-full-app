@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const todoSchema = mongoose.Schema({
   text: {
     type: String,
@@ -24,6 +23,11 @@ const todoSchema = mongoose.Schema({
   date: {
     type: Number,
     default: Date.now(),
+  },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User", // Assuming your User model is named "User"
+    required: true, // Ensure every to-do is associated with a user
   },
 });
 
