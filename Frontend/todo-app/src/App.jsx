@@ -1,19 +1,20 @@
-import React from "react";
 import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
-import DailyTodos from "./components/Pages/DailyTodos";
-import Home from "./components/Pages/Home";
+import DailyTodos from "./components/Todo/DailyTodo";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import TodoHistory from "./components/Pages/TodoHistory";
+import Login from "./components/Auth/Login";
+import SignUp from "./components/Auth/SignUp";
+import Profile from "./components/Auth/Profile";
 const App = () => {
   return (
     <>
       <Navbar />
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/DailyTodo" element={<DailyTodos />}></Route>
-        <Route path="/TodoHistory" element={<TodoHistory />}></Route>
+        <Route path="/" element={<DailyTodos />} />
+        <Route exact path="/login" element={<Login />} />
+        <Route exact path="/signup" element={<SignUp />} />
+        <Route exact path="/profile" element={<Profile />} />
       </Routes>
       <ToastContainer />
     </>
